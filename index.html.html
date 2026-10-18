@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>My Daily Tracker</title>
+<style>
+:root{--p:#4f46e5;--bg:#f4f5fb;--t:#1f2937;--m:#6b7280;--r:#10b981;--w:#f59e0b;--h:#ec4899}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--t);padding-bottom:100px}
+header{background:var(--p);color:#fff;padding:16px;padding-top:calc(16px + env(safe-area-inset-top));position:sticky;top:0;z-index:5}
+header h1{font-size:20px}header small{opacity:.85}
+.warn{background:#fef3c7;color:#92400e;padding:10px 14px;font-size:13px}
+main{padding:12px;max-width:600px;margin:auto}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px #0001}
+h3{font-size:16px;margin-bottom:10px}
+label{font-size:14px;color:var(--m);display:block;margin:8px 0 4px}
+.page{display:none}.page.active{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #e5e7eb;z-index:5;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:8px 0 10px;font-size:12px;color:var(--m);cursor:pointer}
+nav button span{display:block;font-size:22px;pointer-events:none}
+nav button.on{color:var(--p);font-weight:700}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px;border:0;border-radius:10px;background:#e5e7eb;font-weight:600;font-size:14px;cursor:pointer;color:var(--t)}
+.tabs button.on{color:#fff}
+input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;font-size:16px;margin-bottom:8px;background:#fff;color:var(--t)}
+input[type=range]{padding:0;border:0}
+.btn{background:var(--p);color:#fff;border:0;padding:12px 14px;border-radius:10px;font-size:15px;width:100%;text-align:center;cursor:pointer;display:block;position:relative;overflow:hidden}
+.btn.sm{width:auto;white-space:nowrap;margin-bottom:8px;flex:0 0 auto}
+.btn.gray{background:#6b7280}.btn.red{background:#ef4444}
+.row{display:flex;gap:8px;align-items:center}
+.row>.btn{flex:1}
+.ml{min-width:120px;font-size:14px}
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f1f1}
+.item:last-child{border:0}
+.item.click{cursor:pointer}
+.item input[type=checkbox]{width:26px;height:26px;margin:0;flex-shrink:0;accent-color:var(--p)}
+.item .tt{flex:1}.item small{color:var(--m);font-size:12px}
+.item.done .tt>span{text-decoration:line-through;color:var(--m)}
+.tag{font-size:11px;padding:2px 8px;border-radius:20px;color:#fff;margin-right:4px}
+.late{color:#ef4444!important;font-weight:700}
+.del{border:0;background:none;color:#ef4444;font-size:20px;padding:6px 10px;cursor:pointer}
+.emo{display:flex;justify-content:space-between}
+.emo button{font-size:30px;border:2px solid transparent;background:none;border-radius:12px;padding:4px 6px;cursor:pointer}
+.emo button.on{border-color:var(--p);background:#eef2ff}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat div{background:#eef2ff;border-radius:12px;padding:12px;text-align:center;font-size:13px;color:var(--m)}
+.stat b{display:block;font-size:22px;color:var(--p)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px;border-bottom:1px solid #e5e7eb}
+.bars div{flex:1;border-radius:4px 4px 0 0}
+.bl{display:flex;gap:3px;margin-top:4px}.bl span{flex:1;text-align:center;font-size:10px;color:var(--m)}
+.prog{height:10px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:4px 0 10px}
+.prog i{display:block;height:100%}
+.empty{color:var(--m);text-align:center;padding:12px;font-size:14px}
+.ins li{margin:0 0 6px 18px;font-size:14px}
+.fileIn{position:absolute;inset:0;opacity:0;cursor:pointer}
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
+.modal .box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:340px}
+.modal p{margin-bottom:14px;font-size:16px}
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:40}
+</style>
+</head>
+<body>
+<header><h1>📋 My Daily Tracker</h1><small id="today"></small></header>
+<div id="warn" class="warn" hidden>⚠️ หน้านี้ไม่อนุญาตให้บันทึกข้อมูลถาวร ใช้งานได้ แต่ข้อมูลจะหายเมื่อปิดหน้า</div>
+<main>
+  <section id="home" class="page active"></section>
+  <section id="lists" class="page"></section>
+  <section id="journal" class="page"></section>
+  <section id="stats" class="page"></section>
+</main>
+<nav>
+  <button data-act="go" data-v="home" class="on"><span>🏠</span>หน้าแรก</button>
+  <button data-act="go" data-v="lists"><span>✅</span>รายการ</button>
+  <button data-act="go" data-v="journal"><span>📝</span>บันทึก</button>
+  <button data-act="go" data-v="stats"><span>📊</span>วิเคราะห์</button>
+</nav>
+<div id="modal" class="modal" hidden><div class="box"><p id="mtxt"></p>
+  <div class="row"><button class="btn gray" data-act="mno">ยกเลิก</button><button class="btn red" data-act="myes">ตกลง</button></div></div></div>
+<div id="toast"></div>
+
+<script>
+const K='dailyTrackerV1';
+const $=id=>document.getElementById(id);
+const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const T=()=>fmt(new Date());
+const addDays=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return fmt(d)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MOODS=['😞','😕','😐','🙂','😄'];
+const COL={routine:'var(--r)',work:'var(--w)',hobby:'var(--h)'};
+const NAME={routine:'Routine',work:'Work',hobby:'Hobby'};
+const PR={3:['สูง','#ef4444'],2:['กลาง','#f59e0b'],1:['ต่ำ','#10b981']};
+
+// ---------- ระบบเก็บข้อมูล (ทำงานต่อได้แม้ถูกบล็อก) ----------
+let canStore=true;
+try{localStorage.setItem('__t','1');localStorage.removeItem('__t')}catch(e){canStore=false}
+let S=null;
+if(canStore){try{S=JSON.parse(localStorage.getItem(K)||'null')}catch(e){S=null}}
+if(!S||!Array.isArray(S.tasks)){const d=T();S={tasks:[
+  {id:uid(),type:'routine',title:'ตื่นนอน 6:00',created:d},
+  {id:uid(),type:'routine',title:'ดื่มน้ำ 8 แก้ว',created:d},
+  {id:uid(),type:'routine',title:'ออกกำลังกาย 30 นาที',created:d},
+  {id:uid(),type:'routine',title:'อ่านหนังสือ 20 นาที',created:d},
+  {id:uid(),type:'work',title:'ตัวอย่าง: ส่งรายงานประจำสัปดาห์',created:d,pri:3,due:addDays(d,2),done:false},
+  {id:uid(),type:'hobby',title:'ตัวอย่าง: ฝึกกีตาร์ 1 เพลง',created:d,done:false}
+ ],rlog:{},journal:{},metrics:['น้ำหนัก (kg)','ชั่วโมงนอน','หน้าที่อ่าน']}}
+S.rlog=S.rlog||{};S.journal=S.journal||{};S.metrics=S.metrics||[];
+function save(){if(!canStore)return;try{localStorage.setItem(K,JSON.stringify(S))}catch(e){canStore=false;$('warn').hidden=false}}
+save();if(!canStore)$('warn').hidden=false;
+
+let page='home',curTab='routine',period=7,jDate=null,jMood=0,pending=null;
+
+function toast(m){const t=$('toast');t.textContent=m;t.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.opacity=0,1600)}
+function ask(msg,fn){pending=fn;$('mtxt').textContent=msg;$('modal').hidden=false}
+function empty(m){return `<div class="empty">${m}</div>`}
+function go(p){page=p;document.querySelectorAll('.page').forEach(e=>e.classList.toggle('active',e.id===p));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===p));render();window.scrollTo(0,0)}
+function render(){$('today').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  ({home:renderHome,lists:renderLists,journal:renderJournal,stats:renderStats})[page]()}
+
+// ---------- Task ----------
+const isDone=(t,d)=>{d=d||T();return t.type==='routine'?(S.rlog[d]||[]).includes(t.id):!!t.done};
+function streak(t){let d=T();if(!isDone(t,d))d=addDays(d,-1);let n=0;while(isDone(t,d)&&n<3650){n++;d=addDays(d,-1)}return n}
+function sortWork(L){return [...L].sort((a,b)=>(a.done-b.done)||((b.pri||2)-(a.pri||2))||((a.due||'9999').localeCompare(b.due||'9999')))}
+function toggle(id){const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  if(t.type==='routine'){const a=S.rlog[T()]||(S.rlog[T()]=[]);const i=a.indexOf(id);i>=0?a.splice(i,1):a.push(id)}
+  else{t.done=!t.done;t.doneAt=t.done?T():null}
+  save();render();if(isDone(t))toast('เยี่ยมมาก! 🎉')}
+function addTask(){const inp=$('nt');const v=inp.value.trim();if(!v){inp.focus();toast('พิมพ์ชื่อรายการก่อนนะ');return}
+  const t={id:uid(),type:curTab,title:v,created:T(),done:false};
+  if(curTab==='work'){t.pri=+$('np').value;t.due=$('nd').value||null}
+  S.tasks.push(t);save();render();toast('เพิ่มแล้ว ✅')}
+function itemHTML(t,canDel){const done=isDone(t);let meta='';
+  if(t.type==='routine')meta=`<small>🔥 ${streak(t)} วันติดต่อกัน</small>`;
+  if(t.type==='work'){const p=PR[t.pri||2];const late=!t.done&&t.due&&t.due<T();
+    meta=`<span class="tag" style="background:${p[1]}">${p[0]}</span>`+(t.due?`<small class="${late?'late':''}">📅 ${t.due}${late?' (เลยกำหนด)':''}</small>`:'')}
+  if(t.type==='hobby'&&t.doneAt)meta=`<small>เสร็จเมื่อ ${t.doneAt}</small>`;
+  return `<div class="item ${done?'done':''}"><input type="checkbox" data-act="toggle" data-v="${t.id}" ${done?'checked':''}>
+  <div class="tt"><span>${esc(t.title)}</span><div>${meta}</div></div>${canDel?`<button class="del" data-act="del" data-v="${t.id}">✕</button>`:''}</div>`}
+
+// ---------- หน้าแรก ----------
+function renderHome(){const R=S.tasks.filter(t=>t.type==='routine');const rd=R.filter(t=>isDone(t)).length;
+  const W=S.tasks.filter(t=>t.type==='work'&&!t.done);const best=R.length?Math.max(...R.map(streak)):0;const j=S.journal[T()];
+  $('home').innerHTML=`<div class="card"><div class="stat">
+    <div><b>${rd}/${R.length}</b>Routine วันนี้</div><div><b>${W.length}</b>งานค้าง</div>
+    <div><b>🔥 ${best}</b>Streak สูงสุด</div><div><b>${j&&j.mood?MOODS[j.mood-1]:'—'}</b>Mood วันนี้</div></div>
+    <div class="prog" style="margin-top:12px"><i style="width:${R.length?rd/R.length*100:0}%;background:var(--r)"></i></div></div>
+  <div class="card"><h3>✅ Routine วันนี้</h3>${R.map(t=>itemHTML(t,false)).join('')||empty('ยังไม่มี Routine')}</div>
+  <div class="card"><h3>⚡ งานเร่งด่วน</h3>${sortWork(W).slice(0,5).map(t=>itemHTML(t,false)).join('')||empty('ไม่มีงานค้าง 🎉')}</div>
+  <button class="btn" data-act="logToday">📝 ${j?'แก้ไข':'บันทึก'} Daily Log วันนี้</button>`}
+
+// ---------- รายการ ----------
+function renderLists(){const L=S.tasks.filter(t=>t.type===curTab);
+  const list=curTab==='work'?sortWork(L):[...L].sort((a,b)=>isDone(a)-isDone(b));
+  $('lists').innerHTML=`<div class="tabs">${['routine','work','hobby'].map(k=>`<button data-act="tab" data-v="${k}" class="${k===curTab?'on':''}"
+    style="${k===curTab?'background:'+COL[k]:''}">${NAME[k]}</button>`).join('')}</div>
+  <div class="card"><input id="nt" enterkeyhint="done" placeholder="เพิ่มรายการ ${NAME[curTab]}...">
+    ${curTab==='work'?`<label>ความสำคัญ</label><select id="np"><option value="3">สูง</option><option value="2" selected>กลาง</option><option value="1">ต่ำ</option></select>
+    <label>กำหนดส่ง</label><input type="date" id="nd">`:''}
+    <button class="btn" style="background:${COL[curTab]}" data-act="add">+ เพิ่ม</button></div>
+  <div class="card">${list.map(t=>itemHTML(t,true)).join('')||empty('ยังไม่มีรายการ')}</div>`}
+
+// ---------- บันทึกประจำวัน ----------
+function renderJournal(){jDate=jDate||T();const j=S.journal[jDate]||{mood:0,energy:5,note:'',m:{}};jMood=j.mood||0;
+  const recent=Object.keys(S.journal).sort().reverse().slice(0,7).map(d=>{const x=S.journal[d];
+    return `<div class="item click" data-act="jday" data-v="${d}"><div class="tt"><b>${d}</b> ${x.mood?MOODS[x.mood-1]:''} ⚡${x.energy}/10
+    <br><small>${esc((x.note||'').slice(0,70))}</small></div></div>`}).join('');
+  $('journal').innerHTML=`<div class="card"><h3>📝 Daily Log</h3>
+    <input type="date" id="jd" value="${jDate}" max="${T()}">
+    <label>ความรู้สึกวันนี้</label>
+    <div class="emo">${MOODS.map((e,i)=>`<button data-act="mood" data-v="${i+1}" class="${jMood===i+1?'on':''}">${e}</button>`).join('')}</div>
+    <label>พลังงาน: <b id="ev">${j.energy}</b>/10</label>
+    <input type="range" min="1" max="10" value="${j.energy}" id="je">
+    <label>บันทึก / สิ่งที่ได้เรียนรู้วันนี้</label>
+    <textarea id="jn" rows="4" placeholder="วันนี้เป็นอย่างไรบ้าง...">${esc(j.note)}</textarea>
+    <label>ตัวชี้วัด (Custom Metrics)</label>
+    ${S.metrics.map((m,i)=>`<div class="row"><span class="ml">${esc(m)}</span><input type="number" step="any" inputmode="decimal" id="m${i}" value="${j.m&&j.m[m]!=null?j.m[m]:''}">
+      <button class="del" data-act="delM" data-v="${i}">✕</button></div>`).join('')}
+    <button class="btn" data-act="saveJ">💾 บันทึก</button></div>
+  <div class="card"><h3>➕ เพิ่มตัวชี้วัด</h3><div class="row"><input id="nm" enterkeyhint="done" placeholder="เช่น ก้าวเดิน, น้ำ (แก้ว)"><button class="btn sm" data-act="addM">เพิ่ม</button></div></div>
+  <div class="card"><h3>📚 บันทึกล่าสุด (แตะเพื่อแก้ไข)</h3>${recent||empty('ยังไม่มีบันทึก')}</div>
+  <div class="card"><h3>🗄️ สำรองข้อมูล</h3><div class="row"><button class="btn gray" data-act="exp">⬇️ Export</button>
+    <div class="btn gray">⬆️ Import<input type="file" id="impf" class="fileIn" accept=".json,application/json"></div></div></div>`}
+function saveJ(){const m={};S.metrics.forEach((k,i)=>{const v=$('m'+i).value;if(v!=='')m[k]=+v});
+  S.journal[jDate]={mood:jMood,energy:+$('je').value,note:$('jn').value,m};save();toast('บันทึกแล้ว ✅');render()}
+function addMetric(){const v=$('nm').value.trim();if(!v)return;if(S.metrics.includes(v))return toast('มีตัวชี้วัดนี้แล้ว');S.metrics.push(v);save();render();toast('เพิ่มตัวชี้วัดแล้ว')}
+async function exp(){const txt=JSON.stringify(S);const name='tracker-backup-'+T()+'.json';
+  try{const f=new File([txt],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}
+  catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));
+  a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function imp(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.tasks))throw 0;S=d;S.rlog=S.rlog||{};S.journal=S.journal||{};S.metrics=S.metrics||[];
+    save();render();toast('นำเข้าข้อมูลสำเร็จ')}catch(e){toast('ไฟล์ไม่ถูกต้อง')}};r.readAsText(f)}
+
+// ---------- วิเคราะห์ ----------
+function bars(vals,max,color,lab){return `<div class="bars">${vals.map(v=>`<div style="height:${Math.max(2,v/max*100)}%;background:${color}"></div>`).join('')}</div>
+  <div class="bl">${lab.map(l=>`<span>${l}</span>`).join('')}</div>`}
+const avgOf=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+function renderStats(){const days=[...Array(period)].map((_,i)=>addDays(T(),i-period+1));
+  const lab=days.map((d,i)=>period===7?['อา','จ','อ','พ','พฤ','ศ','ส'][new Date(d+'T00:00:00').getDay()]:(i%5===0?d.slice(8):''));
+  const R=S.tasks.filter(t=>t.type==='routine');
+  const daily=days.map(d=>{const act=R.filter(t=>t.created<=d);return act.length?Math.round(act.filter(t=>isDone(t,d)).length/act.length*100):0});
+  const avgR=Math.round(avgOf(daily)||0);
+  const per=R.map(t=>{const act=days.filter(d=>d>=t.created);const c=act.filter(d=>isDone(t,d)).length;
+    return{t,c,n:act.length,pct:act.length?Math.round(c/act.length*100):0}}).sort((a,b)=>a.pct-b.pct);
+  const rate=ty=>{const L=S.tasks.filter(t=>t.type===ty),dn=L.filter(t=>t.done);
+    return{total:L.length,done:dn.length,inP:dn.filter(t=>t.doneAt&&t.doneAt>=days[0]).length,pct:L.length?Math.round(dn.length/L.length*100):0}};
+  const w=rate('work'),h=rate('hobby');
+  const overdue=S.tasks.filter(t=>t.type==='work'&&!t.done&&t.due&&t.due<T());
+  const moods=days.map(d=>(S.journal[d]&&S.journal[d].mood)||0);const J=days.map(d=>S.journal[d]).filter(Boolean);
+  const mAvg=avgOf(J.filter(j=>j.mood).map(j=>j.mood)),eAvg=avgOf(J.map(j=>j.energy));
+  const hi=[],lo=[];days.forEach((d,i)=>{const m=S.journal[d]&&S.journal[d].mood;if(m)(daily[i]>=80?hi:lo).push(m)});
+  const mt=S.metrics.map(m=>{const v=days.map(d=>S.journal[d]&&S.journal[d].m?S.journal[d].m[m]:undefined).filter(x=>typeof x==='number');
+    return v.length?`<div class="item"><div class="tt"><b>${esc(m)}</b><br><small>เฉลี่ย ${avgOf(v).toFixed(1)} · ต่ำสุด ${Math.min(...v)} · สูงสุด ${Math.max(...v)} · ล่าสุด ${v[v.length-1]}</small></div></div>`:''}).join('');
+  const ins=[];
+  ins.push(`ทำ Routine สำเร็จเฉลี่ย <b>${avgR}%</b> ต่อวัน ${avgR>=80?'ยอดเยี่ยม! 💪':avgR>=50?'ดี แต่ยังพัฒนาได้อีก':'ลองเริ่มจากเป้าหมายที่เล็กลง'}`);
+  const bi=daily.indexOf(Math.max(...daily));if(daily[bi]>0)ins.push(`วันที่ทำได้ดีที่สุด: <b>${days[bi]}</b> (${daily[bi]}%)`);
+  if(per[0]&&per[0].n&&per[0].pct<70)ins.push(`Routine ที่ตกหล่นบ่อยที่สุด: <b>${esc(per[0].t.title)}</b> (ทำ ${per[0].c}/${per[0].n} วัน)`);
+  if(overdue.length)ins.push(`มีงานเลยกำหนด <b class="late">${overdue.length}</b> งาน: ${overdue.map(t=>esc(t.title)).join(', ')}`);
+  if(hi.length&&lo.length)ins.push(`วันที่ทำ Routine ≥80% มี Mood เฉลี่ย <b>${avgOf(hi).toFixed(1)}</b> เทียบกับ <b>${avgOf(lo).toFixed(1)}</b> ในวันอื่น`);
+  ins.push(`บันทึก Daily Log ไป <b>${J.length}/${period}</b> วัน`);
+  $('stats').innerHTML=`<div class="tabs">${[7,30].map(p=>`<button data-act="period" data-v="${p}" class="${p===period?'on':''}" style="${p===period?'background:var(--p)':''}">${p} วัน</button>`).join('')}</div>
+  <div class="card"><h3>💡 สรุปภาพรวม</h3><ul class="ins">${ins.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+  <div class="card"><div class="stat"><div><b>${avgR}%</b>Routine เฉลี่ย</div><div><b>${mAvg?mAvg.toFixed(1):'—'}/5</b>Mood เฉลี่ย</div>
+    <div><b>${w.inP}</b>Work เสร็จในช่วงนี้</div><div><b>${eAvg?eAvg.toFixed(1):'—'}/10</b>พลังงานเฉลี่ย</div></div></div>
+  <div class="card"><h3>📈 Routine รายวัน (%)</h3>${bars(daily,100,'var(--r)',lab)}</div>
+  <div class="card"><h3>😊 Mood รายวัน</h3>${bars(moods,5,'var(--p)',lab)}</div>
+  <div class="card"><h3>🔥 Routine แต่ละรายการ</h3>${per.map(p=>`<div style="font-size:14px">${esc(p.t.title)} <small style="color:var(--m)">· ${p.pct}% · Streak ${streak(p.t)} วัน</small></div>
+    <div class="prog"><i style="width:${p.pct}%;background:${p.pct<50?'#ef4444':'var(--r)'}"></i></div>`).join('')||empty('ยังไม่มี Routine')}</div>
+  <div class="card"><h3>🎯 Completion Rate</h3>
+    <div style="font-size:14px">Work: ${w.done}/${w.total} (${w.pct}%)</div><div class="prog"><i style="width:${w.pct}%;background:var(--w)"></i></div>
+    <div style="font-size:14px">Hobby: ${h.done}/${h.total} (${h.pct}%)</div><div class="prog"><i style="width:${h.pct}%;background:var(--h)"></i></div></div>
+  <div class="card"><h3>📏 ตัวชี้วัด</h3>${mt||empty('ยังไม่มีข้อมูลตัวชี้วัดในช่วงนี้')}</div>`}
+
+// ---------- รับการกดปุ่มทั้งหมด ----------
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,v=el.dataset.v;
+  switch(a){
+    case 'go':go(v);break;
+    case 'tab':curTab=v;render();break;
+    case 'add':addTask();break;
+    case 'del':ask('ลบรายการนี้?',()=>{S.tasks=S.tasks.filter(t=>t.id!==v);save();render();toast('ลบแล้ว')});break;
+    case 'logToday':jDate=T();go('journal');break;
+    case 'mood':jMood=+v;el.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));break;
+    case 'saveJ':saveJ();break;
+    case 'addM':addMetric();break;
+    case 'delM':ask('ลบตัวชี้วัด "'+S.metrics[+v]+'"?',()=>{S.metrics.splice(+v,1);save();render()});break;
+    case 'jday':jDate=v;render();window.scrollTo(0,0);break;
+    case 'period':period=+v;render();break;
+    case 'exp':exp();break;
+    case 'myes':{$('modal').hidden=true;const f=pending;pending=null;if(f)f();break}
+    case 'mno':$('modal').hidden=true;pending=null;break;
+  }
+});
+document.addEventListener('change',e=>{const el=e.target;
+  if(el.dataset.act==='toggle')toggle(el.dataset.v);
+  else if(el.id==='jd'){jDate=el.value||T();render()}
+  else if(el.id==='impf')imp(el);
+});
+document.addEventListener('input',e=>{if(e.target.id==='je')$('ev').textContent=e.target.value});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;
+  if(e.target.id==='nt'){e.preventDefault();addTask()}
+  if(e.target.id==='nm'){e.preventDefault();addMetric()}
+});
+
+render();
+</script>
+</body>
+</html>
